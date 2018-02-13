@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Dec 29 20:03:07 2017
-My first AI game agent Tic-Tac_Toe
+My first AI game agent, who learn to play Tic-Tac_Toe
+
 Practice
 @author: FPTShop
 """
