@@ -2,7 +2,8 @@
 """
 Created on Fri Dec 29 20:03:07 2017
 My first AI game agent, who learn to play Tic-Tac_Toe
-
+Include 3 class: Environment, Player(AI) and Human
+Using trinary number to encode for state
 Practice
 @author: FPTShop
 """
