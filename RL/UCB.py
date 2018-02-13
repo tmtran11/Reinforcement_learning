@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Dec 29 12:38:58 2017
-
+Upper confident bound, Bandit problem
+Reinforcemnt learning algorithm
 @author: FPTShop
 """
 
