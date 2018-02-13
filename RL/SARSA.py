@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jan  8 11:16:04 2018
-SARSA
+State-action-reward-state-action-reward, Markov Decision Process
+Grid problem
 @author: cc-user
 """
 # t: time, update like real time
 # epsilon-greedy = 1/t, else pick argmax(Q[s])
 # alpha decay by count
 # use one policy first, policy update once
-# No need convergence, use deltas and pyplot
-# print t in Q[s]
+
 import numpy as np
 from matplotlib import pyplot as plt
 class Grid():
