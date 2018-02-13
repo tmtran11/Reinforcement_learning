@@ -10,9 +10,7 @@ Policy iteration and value iteration
 # Do you want it to be deterministic, or stochastic but with nice ratio?
 # if do policy iteration: go by policy to cal stuff, one step ahead and then go through everything, readjust policy
 # if do value iteration: find argmax of value around
-# the grid will store the value? yeah
-# what is the reward, punish for staying in one place, and then reward 1, -1 for end_state
-# do I need any other function to keep in check the value? No.
+
 import numpy as np
 all_move = [1,2,3,4]
 def move(i, j, n, max_i, max_j, walls):
