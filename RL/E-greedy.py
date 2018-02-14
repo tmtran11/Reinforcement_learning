@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Dec 28 22:32:53 2017
-
+Epsilon Greedy Algorithm
+Bandits problem
 @author: FPTShop
 """
 
