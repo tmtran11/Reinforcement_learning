@@ -3,6 +3,7 @@
 """
 Created on Sat Jan  6 09:51:43 2018
 Monte Carlo
+Grid Problem
 @author: cc-user
 """
 # Windy (0.5 a), negative grid (-0.2), with game_over, move, init a starting point
@@ -13,6 +14,7 @@ Monte Carlo
 # Go backward to trace each value and update, if value updated †hen pass
 # Use epsilon greedy when decide follow policy or not
 # Update policy until E, update each episode
+
 import numpy as np
 import matplotlib.pyplot as plt
 class Grid():
