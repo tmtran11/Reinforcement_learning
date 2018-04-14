@@ -62,28 +62,29 @@ class Environment:
         
 class Player:
     def __init__(self, y):
-        self.value = {} #state_number: value
+        #key:state_number, value: (state_value, number of time the state is present)
+        self.value = {}
+        
+        # number of all state, encode in trinary
         for x in range(3**(LENGTH**2)):
             self.value[x] = [0,0.001]
+            
+        # history of all move
         self.history = []
+        
+        # learning rate, number of move, and its own board
         self.y = y
-        self.board = np.zeros((LENGTH, LENGTH))
         self.N = 0
+        self.board = np.zeros((LENGTH, LENGTH))
+    
+    # self's action as 1, opponent's action as 2.
+    # Using 0,1,2 for trinary encoder later
     def update_self(self,action):
         self.board[action[0],action[1]] = 1
     def update_opponent(self,action):
         self.board[action[0],action[1]] = 2
-    def update_value(self, reward): 
-        # combination between learning rate and 1/n. Is this correct?
-        v_bef = 0
-        for i in self.history[::-1]:
-            v = reward + (1/self.value[i][1])*self.y*v_bef
-            self.value[i][0] = v
-            self.value[i][1] = self.value[i][1] + 1
-            v_bef = v
-            reward = 0
-    def update_history(self, state):
-        self.history.append(state)
+        
+    #trinary encoder
     def enum_state(self):
         n = 0
         k = 0
@@ -92,22 +93,47 @@ class Player:
                 n += 3**k*self.board[i,j]
                 k += 1
         return n
-    def take_action(self, state, actions, draw_verbose = False):  
+    
+    # Update value after a reward/punishment is received
+    def update_value(self, reward): 
+        v_bef = 0
+        for i in self.history[::-1]:
+            # Using the state_value by taking the reward, div
+            v = reward + (1/self.value[i][1])*self.y*v_bef
+            self.value[i][0] = v
+            self.value[i][1] = self.value[i][1] + 1
+            v_bef = v
+            reward = 0
+            
+    def update_history(self, state):
+        self.history.append(state)
+    
+    def take_action(self, state, actions, draw_verbose = False):
+        # update number of action for statiscal purpose
         self.N = self.N + 1
+        
+        # sequence of state from previous action
         pos = []
         for action in actions:
             pos.append((state + 3**(action[0]*3+action[1]), action))
+        
+        # Apply Algorithm from Markov Decision process to find best action lead to best state
         np.random.shuffle(pos)
         all_val = []
         m = -100000000
         best_action = None
+        # x is (state_number, action)
         for x in pos:
             if self.value[int(x[0])][0] + sqrt(2.0*log(self.N)/(self.value[int(x[0])][1]+0.01)) > m:
                 m = self.value[int(x[0])][0] + sqrt(2.0*log(self.N)/(self.value[int(x[0])][1]+0.001))
                 all_val.append((self.value[int(x[0])][0], x[1]))
                 best_state = int(x[0])
                 best_action = x[1]
+                
+        # Update the number of time the state is present
         self.value[best_state][1] = self.value[best_state][1] + 1
+        
+        # for debug, if need to print out the board
         if draw_verbose:
             board = self.board.copy()
             for x in all_val:
@@ -120,11 +146,14 @@ class Player:
                     st = st + ' '
                 print(st)
             print('--------------')
+        
         return best_action
+    
     def reset(self):
         self.history = []
         self.board = np.zeros((LENGTH, LENGTH))
-        
+
+# class Human have the same method with class Player; however, no calculation is required
 class Human:
     def __init__(self):
         self.board = np.zeros((LENGTH, LENGTH))
@@ -153,22 +182,27 @@ class Human:
     
       
 def game(p1, p2, show=False):
+    # initialize enviroment
     env = Environment()
     prob1 = np.random.random()
     if prob1 > 0.5:
-        env.players = [0,p1,p2]
+        env.players = [0,p1,p2] # for athrimetic convinience
     else:
         env.players = [0,p2,p1]
+    
+    # switch between value -1 and 1 as p1 and p2 alternatively take move
     xo = -1
     while not env.over:
         xo = 0 - xo
-        actions = []
-        self_state = env.players[xo].enum_state()
+        self_state = env.players[xo].enum_state() # index 1 is p1, index -1 is p2
         print('self state: '+ str(self_state))
+        # all possible action
+        actions = []
         for i in range(LENGTH):
             for j in range(LENGTH):
                 if env.board[i,j]==0:
                    actions.append((i,j)) 
+        # player choose which action to take
         action = env.players[xo].take_action(self_state, actions, draw_verbose = show)
         env.players[xo].update_self(action)
         env.players[0-xo].update_opponent(action)
@@ -177,15 +211,20 @@ def game(p1, p2, show=False):
         env.draw(show)
         self_state = env.players[xo].enum_state()
         env.players[xo].update_history(self_state)
+        
+    # if there is a winner, give 1 reward to winner and -2 reward to loser.
+    # Reward value is collect experimentally
     if env.winner != None:
             env.players[xo].update_value(1.0)
             env.players[0-xo].update_value(-2.0)
+    # if tie, reward 0
     else:
         env.players[xo].update_value(0)
         env.players[0-xo].update_value(0)
     p1.reset()
     p2.reset()
 
+# AI vs AI, training phase, 30000 times
 p1 = Player(0.3)
 p2 = Player(0.3)
 for i in range(30000):
@@ -194,6 +233,7 @@ for i in range(30000):
 
 game(p1, p2, show = True)
 
+# Ai vs Human
 human = Human()
 game(human, p1, show = True)
 
