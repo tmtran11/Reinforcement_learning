@@ -18,6 +18,7 @@ MonteCarlo with Approximation
 
 import numpy as np
 import matplotlib.pyplot as plt
+
 class Grid():
     def __init__(self, size, walls, end_states):
         self.size = size
@@ -28,9 +29,13 @@ class Grid():
             for j in range(size[1]):
                 if (i,j) not in walls:
                     self.all_states[(i,j)] = -0.2
+                    # "hot sand" grid, there is small punishment in each dress
+                    # therefore, the agent is prone to find the final state fast
+        # end_states is the state that end the game, with reward/punishment
         for x in end_states:
-            self.all_states[x] = end_states[x] # reward and count
+            self.all_states[x] = end_states[x]
         self.policy = {}
+        # initilize random action policy for each state
         for i in range(size[0]):
             for j in range(size[1]):
                     if (i,j) not in walls and (i,j) not in end_states:
@@ -40,6 +45,7 @@ class Grid():
         self.sa_history = []
         self.reward_history = []
         self.game_over = False
+        
     def action(self, a):
         p = np.random.randn()
         if p > 0.5:
@@ -47,6 +53,7 @@ class Grid():
         else:
             n = np.random.randint(1,5)
             return n
+        
     def move(self, a, i, j):
         self.sa_history.append((i,j))
         old_n = (i,j)
@@ -63,6 +70,7 @@ class Grid():
         if a==4:
             if j>0 and (i, j-1) not in self.walls:
                 n = (i, j-1) # left
+        # give overwhelming result if stay in one position
         if n == old_n:
             self.reward_history.append(-100.0)
             self.game_over = True
@@ -71,7 +79,9 @@ class Grid():
         if n in self.end_states:
             self.game_over = True
         return n[0], n[1]
-    def eval_policy(self, value): 
+    
+    def eval_policy(self, value):
+        # evaluate best action to take by finding the adjacent state with best value
         for s in self.all_states:
             best_policy = 0
             best_value = -10000
@@ -95,6 +105,7 @@ class Grid():
                         best_value = value[(i, j-1)]
                         best_policy = 4
                 self.policy[s] = best_policy
+                
     def reset(self):
         self.sa_history = []
         self.reward_history = []
@@ -109,12 +120,14 @@ walls = [(1,1)]
 grid = Grid(size, walls, end_states)
 
 def f(s):
-    return np.array([s[0], s[1], s[0]*s[1], 1]) # maybe flex the one a little bit
+    return np.array([s[0], s[1], s[0]*s[1], 1])
 
 def game(grid, E, lr):
     G = []
+    # start position!
     x, y = 0, 2
     while not grid.game_over:
+        # Epsilon greedy
         p = np.random.randn()
         if p > E:
             x, y = grid.move(grid.action(grid.policy[(x,y)]), i = x, j = y)
@@ -130,8 +143,9 @@ def game(grid, E, lr):
             G.append(v)
     return grid.sa_history, G
 
-# training part
+# initializa random weight
 theta = np.random.random(4)
+
 ALPHA = 0.01
 value = {}  
 for i in range(size[0]):
@@ -142,14 +156,23 @@ deltas = []
 x, y = 0, 0
 t = 1.0
 for i in range(5000):
-    print(i)
     if i%100==0:
         t += 0.01
+    # decaying
     alpha = ALPHA/t
+    
+    # epsilon = 0.05
+    # learning rate = 0.2
+    # Q-learning
+    # game() return reverse sequence of state the agent has gone throught and value of each visited state
     states, G = game(grid, 0.05, 0.2)
     biggest_diff = 0
+    
     for n,s in enumerate(states):
         x = f(s)
+        # f(s) = np.array([s[0], s[1], s[0]*s[1], 1])
+        # theta a weight randomly initialized
+        # stochastic gradient descend
         V_hat = theta.dot(x)
         theta += alpha*2*(V_hat-G[n])*x
         old_value = value[s]
@@ -157,19 +180,20 @@ for i in range(5000):
         biggest_diff = max(biggest_diff, abs(old_value-new_value))
         value[s] = new_value
     deltas.append(biggest_diff)
-    grid.eval_policy(value) # fix, now is a key
+    
+    # revaluate the action policy for all states
+    grid.eval_policy(value)
     grid.reset()
     
 plt.plot(deltas)
 plt.show()
 
-# fix
 print('-----------------------------')
 for i in range(size[0]):
     v = ''
     for j in range(size[1]):
         if (i,j) not in end_states and (i,j) not in walls:
-            v = theta.dot(f((i,j))) # be careful with end_states and walls
+            v = theta.dot(f((i,j))) 
             v = str(v) + '\t'
         else:
             v = '0' + '\t'
