@@ -6,18 +6,13 @@ Monte Carlo
 Grid Problem
 @author: cc-user
 """
-# Windy (0.5 a), negative grid (-0.2), with game_over, move, init a starting point
-# in grid, store step and reward altogther
-# only need a grid class
-# Do 2000 episode
-# Move until game_over, return value and reward, reward -100 and end game if end up in the same pos
-# Go backward to trace each value and update, if value updated †hen pass
-# Use epsilon greedy when decide follow policy or not
-# Update policy until E, update each episode
+# Q-learning, Epsilon greedy, Poicy evaluation
 
 import numpy as np
 import matplotlib.pyplot as plt
 class Grid():
+    # In the grid there will multiple plots triggering game over with reward/punishment
+    # called the end_states
     def __init__(self, size, walls, end_states):
         self.size = size
         self.walls = walls
@@ -32,6 +27,8 @@ class Grid():
         self.sa_history = []
         self.reward_history = []
         self.game_over = False
+   
+    # represent a "windy" grid, which mean an action can be changed by a mutable environment
     def action(self, a):
         p = np.random.randn()
         if p > 0.5:
@@ -39,6 +36,7 @@ class Grid():
         else:
             n = np.random.randint(1,5)
             return n
+        
     def move(self, a, i, j):
         self.sa_history.append(((i, j), a))
         old_n = (i,j)
@@ -55,6 +53,7 @@ class Grid():
         if a==4:
             if j>0 and (i, j-1) not in self.walls:
                 n = (i, j-1) # left
+        # Give overwhelming punishment for staying in one spot
         if n == old_n:
             self.reward_history.append(-100.0)
             self.game_over = True
@@ -63,6 +62,7 @@ class Grid():
         if n in self.end_states:
             self.game_over = True
         return n[0], n[1]
+    
     def reset(self):
         self.sa_history = []
         self.reward_history = []
@@ -75,6 +75,7 @@ end_states[(0,3)] = 1.0
 end_states[(1,3)] = -1.0
 walls = [(1,1)]
 grid = Grid(size, walls, end_states)
+
 def draw_value(value, show = True):
     print('-----------------------------')
     for i in range(size[0]):
@@ -109,7 +110,8 @@ def eval_policy(policy, V, all_states):
                 max_action = a
         policy[s] = max_action
     return policy
-# how to put Enough:
+
+
 def game(E, lr):
     deltas = []
     policy = {}
@@ -118,7 +120,10 @@ def game(E, lr):
             if (i,j) not in walls:
                 policy[(i, j)] = np.random.randint(1,5)
     V = {}
+    # V[state][action] = mean value
     Q = {}
+    # Q[state][action] = all value 
+    # Q is used for plotting purpose
     for s in grid.all_states:
         V[s] = {}
         Q[s] = {}
@@ -127,7 +132,7 @@ def game(E, lr):
             Q[s][a] = []
     x, y = 0, 0
     for i in range(5000):
-        print(i)
+        # Move randomly or move by policy base on Epsilon Greedy
         while not grid.game_over:
             p = np.random.randn()
             if p > E:
@@ -137,12 +142,16 @@ def game(E, lr):
         grid.reward_history.reverse()
         grid.sa_history.reverse()
         visited_state = []
+        
+        # Q-Learning, evaluate policy
         for n, m in enumerate(grid.sa_history):
             s = m[0]
             a = m[1]
             v = 0
             biggest_change = -100.0
             if s not in visited_state:
+                # assign reltive reward to relative step
+                # degrading reward step by step theough learning rate
                 v = grid.reward_history[n] + lr*v
                 Q[s][a].append(v)
                 old_value = V[s][a]
@@ -152,7 +161,7 @@ def game(E, lr):
         policy = eval_policy(policy, V, grid.all_states.keys())
         deltas.append(biggest_change)
         grid.reset()
-    # value to do policy
+        
     value = {}
     for s in V:
         total = 0
@@ -164,6 +173,8 @@ def game(E, lr):
         value[s] = total/count
     draw_policy(policy)
     return deltas
+
+# Plot the behavior or AI through times as it become move adept at handingling a "windy" grid
 deltas = game(0.06, 0.4)
 ax = plt.plot(deltas)
 ax.set_xscale("log")
