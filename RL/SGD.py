@@ -6,16 +6,6 @@ MonteCarlo with Approximation
 @author: FPTShop
 """
 
-# use game epissode, pdate value in episode, return state and value
-# initialize a theta, size 4?
-# while initiate theta, have to use random.randn, and also, devide by 2 for convinient derivaitve
-# initialize a f(x), vectorize state, size 4?
-# alpha learning rate of theta, decay by t for convergence. Anything else need to decay, like epsilon??
-# x = f(s)
-# V_hat = f(s)*(theta)
-# update theta = theta + alpha(G - V_hat)*x //this is because minimize the error and gradient descent smartly
-# do this for 20000 time
-
 import numpy as np
 import matplotlib.pyplot as plt
 
